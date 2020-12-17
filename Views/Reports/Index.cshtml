@@ -1,0 +1,221 @@
+﻿@model IEnumerable<mio1412.Models.Report>
+@using Microsoft.AspNetCore.Http;
+
+@{
+    ViewData["Title"] = "Index";
+    Layout = "_layout";
+    var count = 0;
+    var name = Context.Session.GetString("name");
+    var aid = Context.Session.GetInt32("aid");
+}
+
+<h1>Xin chào <a href="Accounts/Details/@aid"><b><i style="color:dodgerblue">@name</i></b></a></h1>
+
+
+<hr />
+
+<br />
+<div class="row">
+    <div class="col-6 btnContainer">
+        <button id="changeValue" class="btn btn-dark" type="button" onclick="return showCreateAjax()">Create Ajax</button>
+        <br />
+        @*<a asp-action="Create">Create New Report</a>*@
+    </div>
+    
+    <div class="col-6">
+        <form asp-action="Index">
+            <div class="row">
+                <div class="col-8">
+                    @if (ViewBag.crDate != null)
+                    {
+                        <input id="txtDate" class="form-control" name="txtDate" type="date" value="@ViewBag.crDate" />
+                    }
+                    else
+                    {
+                        <input id="txtDate" class="form-control" name="txtDate" type="date" value="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                    }
+
+                </div>
+                <div class="col-4">
+                    <button class="btn btn-primary" type="submit">Filter</button>
+                </div>
+            </div>
+
+        </form>
+    </div>
+</div>
+<div id="showCreate" style="display:none">
+    <br />
+    <div class="row">
+        <div class="col-md-8">
+            <form>
+                <div class="form-group name-required">
+                    <label class="control-label">Task Name</label>
+                    <input id="txtName" class="form-control" placeholder="Enter Task Name" />
+                    
+                </div>
+                <div class="form-group pro-required">
+                    <label class="control-label">Progress</label>
+                    <input id="txtPro" class="form-control" placeholder="Enter Progress" />
+                </div>
+                <div class="form-group">
+                    <label class="control-label">Issues</label>
+                    <input id="txtIss" class="form-control" placeholder="Issues" />
+                </div>
+                
+            </form>
+        </div>
+        <div class="col-4" style="display: flex; justify-content: center; align-items: center; height:auto">
+            <div class="form-group row">
+                <button type="button" onclick="createReport(@aid)" class="btn btn-primary">Add Report</button>
+            </div>
+
+            <div id="showError" class="row" style="margin-top:15%"></div>
+        </div>
+    </div>
+</div>
+
+<br />
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                STT
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Task_Name)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Progress)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Issues)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody id="addResult">
+        @foreach (var item in Model)
+        {
+            count += 1;
+            <tr>
+                <td>
+                    @count
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Task_Name)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Progress)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Issues)
+                </td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
+                    <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
+                    <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<script src="https://code.jquery.com/jquery-3.5.1.js"
+        integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc="
+        crossorigin="anonymous"></script>
+
+
+
+
+<script>
+    var count = @count;
+
+    function createReport(txtAid)
+    {
+        var txtName, txtPro, txtIss;
+        txtName = $("#txtName").val();
+        txtPro = $("#txtPro").val();
+        txtIss = $("#txtIss").val();
+
+        @*if (txtName.trim() == "") {
+            $(".name-required").append("<span class='text-danger'>Task name is required</span>");
+        }
+
+        if (txtPro.trim() == "") {
+            $(".pro-required").append("<span class='text-danger'>Progress is required</span>");
+        }*@
+
+        $(".name-required").find("span").remove();
+        $(".pro-required").find("span").remove();
+
+        if (txtName.trim() == "") {
+            $(".name-required").append("<span class='text-danger'>Task name is required</span>");
+            return false;
+        }
+
+        if (txtPro.trim() == "") {
+            $(".pro-required").append("<span class='text-danger'>Progress is required</span>");
+            return false;
+        }
+
+        $.ajax(
+            {
+                url: "/Reports/CreateAjax",
+                method: 'post',
+                //dataType: "JSON",
+                data:
+                {
+                    txtAid: txtAid,
+                    txtName: txtName,
+                    txtPro: txtPro,
+                    txtIss: txtIss
+                },
+                success: function (res) {
+                    //console.log(res);
+                    var countRs = count + 1;
+                    if (res != 0) {
+                        $("#showError").append("<br/><i style='color:blue'>Thêm mới Report thành công</i>");
+                        $("#addResult").append(
+                            "<tr>" +
+                            "<td>" + countRs + "</td>" +
+                            "<td>" + txtName + "</td>" +
+                            "<td>" + txtPro + "</td >" +
+                            "<td>" + txtIss + "</td>" +
+                            "<td>" +
+                            "<a href='/Reports/Edit/" + res + "'>Edit</a> | " +
+                            "<a href='/Reports/Details/" + res + "'>Details</a> | " +
+                            "<a href='/Reports/Delete/" + res + "'> Delete</a> " +
+                            "</td>" +
+                            "</tr > ");
+                        count += 1;
+                        $("#txtName").val("");
+                        $("#txtPro").val("");
+                        $("#txtIss").val("");
+                    }
+                    else
+                    {
+                        $("#showError").append("<br/><i style='color:red'>Có lỗi xảy ra, vui lòng thử lại</i>");
+                    }
+                }
+
+            });
+    }
+
+
+    function showCreateAjax() {
+        var check = $("#showCreate").hasClass("hideCreate");
+        if (check == false) {
+            $("#showCreate").addClass("hideCreate");
+            $("#showCreate").show();
+            $("#changeValue").remove();
+            $(".btnContainer").append("<button id='changeValue' class='btn btn-dark' type='button' onclick='return showCreateAjax()'>Hide</button>");
+        } else {
+            $("#showCreate").removeClass("hideCreate");
+            $("#showCreate").hide();
+            $("#changeValue").remove();
+            $(".btnContainer").append("<button id='changeValue' class='btn btn-dark' type='button' onclick='return showCreateAjax()'>Create New Report</button>");
+        }
+    }
+
+</script>
